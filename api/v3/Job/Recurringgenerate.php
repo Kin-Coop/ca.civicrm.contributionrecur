@@ -74,6 +74,12 @@ function civicrm_api3_job_recurringgenerate($params) {
   $dtCurrentDayStart = $dtCurrentDay."000000";
   $dtCurrentDayEnd   = $dtCurrentDay."235959";
   $expiry_limit = date('ym');
+
+
+  /**
+   * This section seems just to be updating end dates so not sure if this would cause duplicate contribution records to be created
+   * These queries are updating the recurring records only
+   */
   // Before triggering payments, we need to do some housekeeping of the civicrm_contribution_recur records.
   // First update the end_date and then the complete/in-progress values.
   // We do this both to fix any failed settings previously, and also
@@ -126,6 +132,11 @@ function civicrm_api3_job_recurringgenerate($params) {
       }
     }
   }
+
+
+  /**
+   * This should not affect creating dupes - is updating the recurring records only
+   */
   // Second, make sure any open-ended recurring contributions have no end date set
   $update = 'UPDATE civicrm_contribution_recur cr
       INNER JOIN civicrm_payment_processor pp ON cr.payment_processor_id = pp.id
@@ -137,6 +148,9 @@ function civicrm_api3_job_recurringgenerate($params) {
         AND NOT(ISNULL(cr.end_date))'.$param_where;
   CRM_Core_DAO::executeQuery($update);
 
+  /**
+   * This updating of contribution status might have an affect later down the line??
+   */
   // Third, we update the status_id of the all in-progress or completed recurring contribution records
   // Unexpire uncompleted cycles
   $update = 'UPDATE civicrm_contribution_recur cr
@@ -147,6 +161,10 @@ function civicrm_api3_job_recurringgenerate($params) {
         cr.contribution_status_id = 1
         AND (cr.end_date IS NULL OR cr.end_date > NOW())'.$param_where;
   CRM_Core_DAO::executeQuery($update);
+
+  /**
+   * And this?
+   */
   // Expire badly-defined completed cycles
   $update = 'UPDATE civicrm_contribution_recur cr
       INNER JOIN civicrm_payment_processor pp ON cr.payment_processor_id = pp.id
@@ -163,8 +181,11 @@ function civicrm_api3_job_recurringgenerate($params) {
         )'.$param_where;
   CRM_Core_DAO::executeQuery($update);
 
+  /**
+   * Select most (active) recurring records with due date today or earlier
+   */
   // Now we're ready to generate contribution records
-  // Select the ongoing recurring payments where the next scheduled contribution date is before the end of of the current day
+  // Select the ongoing recurring payments where the next scheduled contribution date is before the end of the current day
   $select = 'SELECT cr.*, pp.class_name, pp.is_test
       FROM civicrm_contribution_recur cr
       INNER JOIN civicrm_payment_processor pp ON cr.payment_processor_id = pp.id
@@ -177,6 +198,10 @@ function civicrm_api3_job_recurringgenerate($params) {
   $dao = CRM_Core_DAO::executeQuery($select,$args);
   $counter = 0;
   $output  = array();
+
+  /**
+   * This next loop runs pretty much to the end of the php file
+   */
 
   while ($dao->fetch()) {
 
@@ -226,6 +251,10 @@ function civicrm_api3_job_recurringgenerate($params) {
       $contribution[ 'api.line_item.create'] = $contribution_template['line_items'];
     }
 
+    /**
+     * This next bit of code, is my code, that skips contribution records which are due today
+     * Maybe I can change this to include contribution records either today or earlier
+     */
     // check if there are already any existing contributions for this recurring
     // id for today with a status of pending and this contact
     // if so skip creating a contribution record but still need to
@@ -249,6 +278,9 @@ function civicrm_api3_job_recurringgenerate($params) {
       $contributionResult = FALSE;
     } else {
       // create the pending contribution, and save its id
+      /**
+       * This is the line that creates the contribution record
+       */
       $contributionResult = civicrm_api('contribution','create', $contribution);
     }
 
@@ -257,6 +289,7 @@ function civicrm_api3_job_recurringgenerate($params) {
       break;
     }
     $contribution_id = CRM_Utils_Array::value('id', $contributionResult);
+
     // if our template contribution has a membership payment, make this one also
     if ($domemberships && !empty($contribution_template['contribution_id'])) {
       try {

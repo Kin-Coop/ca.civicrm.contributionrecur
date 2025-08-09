@@ -271,9 +271,8 @@ function civicrm_api3_job_recurringgenerate($params) {
 
     $c_args[1] = array($contribution_recur_id, 'Integer');
     $c_args[2] = array($contact_id, 'Integer');
-    $c_args[3] = array($dtCurrentDayEnd, 'String');
-    $c_args[4] = array($dtCurrentDayStart, 'String');
-
+    $c_args[3] = array($dtCurrentDayStart, 'String');
+    $c_args[4] = array($dtCurrentDayEnd, 'String');
     $c_dao = CRM_Core_DAO::executeQuery($check,$c_args);
 
     if ($c_dao->fetch()) {

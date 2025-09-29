@@ -284,7 +284,24 @@ function civicrm_api3_job_recurringgenerate($params) {
        * This is the line that creates the contribution record
        */
       $contributionResult = civicrm_api('contribution','create', $contribution);
+
+      // Debugging
+      // Log the whole contribution array
+      Civi::log()->info('New contribution created', [
+        'contribution' => $contribution,
+      ]);
+
+      $body = print_r($contribution, TRUE);
+
+      $result = civicrm_api3('Email', 'send', [
+        'contact_id'   => 375, // The contact to send to
+        'from_email'   => 'info@kin.coop',
+        'from_name'    => 'Kin',
+        'subject'      => 'New Recurring Contribution',
+        'text'         => $body,
+      ]);
     }
+    // End debugging
 
     if (!empty($contributionResult['is_error'])) {
       civicrm_api3_create_error($contributionResult['error_message']);

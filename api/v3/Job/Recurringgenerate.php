@@ -287,7 +287,7 @@ function civicrm_api3_job_recurringgenerate($params) {
 
       // Debugging
       // Log the whole contribution array
-      Civi::log()->info('New contribution created', [
+      Civi::log()->info('New (recurring) contribution created', [
         'contribution' => $contribution,
       ]);
 

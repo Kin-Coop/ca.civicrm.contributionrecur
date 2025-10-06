@@ -75,7 +75,7 @@ function civicrm_api3_job_recurringgenerate($params) {
   $dtCurrentDayEnd   = $dtCurrentDay."235959";
   $expiry_limit = date('ym');
 
-
+  /** this section is probably not relevant as it relates to a set number of installments which we are not using */
   /**
    * This section seems just to be updating end dates so not sure if this would cause duplicate contribution records to be created
    * These queries are updating the recurring records only
@@ -114,6 +114,14 @@ function civicrm_api3_job_recurringgenerate($params) {
     }
   }
   $select .= $param_where .' GROUP BY c.contribution_recur_id';
+  /**
+   * SELECT cr.*, count(c.id) AS installments_done, NOW() as test_now
+   * FROM civicrm_contribution_recur cr
+   * INNER JOIN civicrm_contribution c ON cr.id = c.contribution_recur_id
+   * INNER JOIN civicrm_payment_processor pp ON cr.payment_processor_id = pp.id
+   * WHERE (cr.installments > 0) AND (c.total_amount > 0) AND (cr.contribution_status_id IN (1,5)) // 1 = completed, 5 = in progress
+   * GROUP BY c.contribution_recur_id
+   */
   $dao = CRM_Core_DAO::executeQuery($select);
   while ($dao->fetch()) {
     // check for end dates that should be unset because I haven't finished
@@ -133,7 +141,7 @@ function civicrm_api3_job_recurringgenerate($params) {
     }
   }
 
-
+  /** This section is not relevant to us as it is referencing installments */
   /**
    * This should not affect creating dupes - is updating the recurring records only
    */
@@ -149,7 +157,7 @@ function civicrm_api3_job_recurringgenerate($params) {
   CRM_Core_DAO::executeQuery($update);
 
   /**
-   * This updating of contribution status might have an affect later down the line??
+   * Set contribution status to "in progress" for all CR records if end date is null or in the future. This updating of contribution status might have an affect later down the line??
    */
   // Third, we update the status_id of the all in-progress or completed recurring contribution records
   // Unexpire uncompleted cycles
@@ -163,7 +171,7 @@ function civicrm_api3_job_recurringgenerate($params) {
   CRM_Core_DAO::executeQuery($update);
 
   /**
-   * And this?
+   * Set status to completed for all CR records where the end date is before today.
    */
   // Expire badly-defined completed cycles
   $update = 'UPDATE civicrm_contribution_recur cr
@@ -271,7 +279,7 @@ function civicrm_api3_job_recurringgenerate($params) {
 
     $c_args[1] = array($contribution_recur_id, 'Integer');
     $c_args[2] = array($contact_id, 'Integer');
-    $c_args[3] = array($dtCurrentDayStart, 'String');
+    $c_args[3] = array($dao->next_sched_contribution_date, 'String');
     $c_args[4] = array($dtCurrentDayEnd, 'String');
     $c_dao = CRM_Core_DAO::executeQuery($check,$c_args);
 

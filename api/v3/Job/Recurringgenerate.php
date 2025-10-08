@@ -276,10 +276,13 @@ function civicrm_api3_job_recurringgenerate($params) {
           c.receive_date >= %3 AND c.receive_date <= %4';
 
     //c.receive_date <= %3';
+    $next_sched_contribution = $dao->next_sched_contribution_date;
+    $next_sched_contribution_date = date('Ymd', strtotime($next_sched_contribution));
+    $next_sched_contribution_date .= '000000';
 
     $c_args[1] = array($contribution_recur_id, 'Integer');
     $c_args[2] = array($contact_id, 'Integer');
-    $c_args[3] = array($dao->next_sched_contribution_date, 'String');
+    $c_args[3] = array($next_sched_contribution_date, 'String');
     $c_args[4] = array($dtCurrentDayEnd, 'String');
     $c_dao = CRM_Core_DAO::executeQuery($check,$c_args);
 

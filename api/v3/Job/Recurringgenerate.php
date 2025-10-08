@@ -301,16 +301,6 @@ function civicrm_api3_job_recurringgenerate($params) {
       Civi::log()->info('New (recurring) contribution created', [
         'contribution' => $contribution,
       ]);
-
-      $body = print_r($contribution, TRUE);
-
-      $result = civicrm_api3('Email', 'send', [
-        'contact_id'   => 2, // The contact to send to
-        'from_email'   => 'info@kin.coop',
-        'from_name'    => 'Kin',
-        'subject'      => 'New Recurring Contribution',
-        'text'         => $body,
-      ]);
     }
     // End debugging
 

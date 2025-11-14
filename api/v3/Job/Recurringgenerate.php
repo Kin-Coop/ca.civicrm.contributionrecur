@@ -297,15 +297,34 @@ function civicrm_api3_job_recurringgenerate($params) {
       $contributionResult = civicrm_api('contribution','create', $contribution);
 
       // Debugging
-      // Log the whole contribution array
+      // Log the whole contribution array and send notification email
       Civi::log()->info('New (recurring) contribution created', [
         'contribution' => $contribution,
       ]);
 
+      try {
+        $contact = \Civi\Api4\Contact::get(FALSE)
+          ->addSelect('display_name')
+          ->addWhere('id', '=', $contact_id)
+          ->setLimit(1)
+          ->execute()
+          ->first();
 
-      mail('admin@kin.coop','New recurring contribution','recurring contribution created',['from'=>'admin@kin.coop']);
+        $group = \Civi\Api4\Contact::get(FALSE)
+          ->addSelect('display_name')
+          ->addWhere('id', '=', $contribution['custom_25'])
+          ->setLimit(1)
+          ->execute()
+          ->first();
 
+        $subject = "New Recurring Contribution of " . $contribution['total_amount'] . " from " . $contact['display_name'];
+        $message = "New Recurring Contribution of " . $contribution['total_amount'] . " from " . $contact['display_name'] . " for " . $group['display_name'];
 
+        mail('admin@kin.coop',$subject,$message,['from'=>'admin@kin.coop']);
+      }
+      catch (Exception $e) {
+        // ignore
+      }
     }
     // End debugging
 

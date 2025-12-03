@@ -298,9 +298,7 @@ function civicrm_api3_job_recurringgenerate($params) {
 
       // Debugging
       // Log the whole contribution array and send notification email
-      Civi::log()->info('New (recurring) contribution created', [
-        'contribution' => $contribution,
-      ]);
+      //Civi::log()->info('New (recurring) contribution created', ['contribution' => $contribution,]);
 
       try {
         $contact = \Civi\Api4\Contact::get(FALSE)
@@ -320,7 +318,9 @@ function civicrm_api3_job_recurringgenerate($params) {
         $subject = "New Recurring Contribution of " . $contribution['total_amount'] . " from " . $contact['display_name'];
         $message = "New Recurring Contribution of " . $contribution['total_amount'] . " from " . $contact['display_name'] . " for " . $group['display_name'];
 
-        mail('admin@kin.coop',$subject,$message,['from'=>'admin@kin.coop']);
+        //mail('admin@kin.coop',$subject,$message,['from'=>'admin@kin.coop']);
+
+        Civi::log()->debug($message);
       }
       catch (Exception $e) {
         // ignore
